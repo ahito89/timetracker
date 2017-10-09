@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using timetracker.Models;
+using timetracker.ViewModels;
 using System.Linq;
 using System;
 using System.IdentityModel.Tokens.Jwt;

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace timetracker.Models
+namespace timetracker.ViewModels
 {
     public class RegisterUserViewModel
     {
