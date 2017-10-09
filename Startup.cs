@@ -47,20 +47,22 @@ namespace timetracker
                ValidateLifetime = true,
                ClockSkew = TimeSpan.Zero
             };
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = tokenValidationParameters;
-            });
-            services.AddAuthorization(options => 
-            {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser().Build();
-            });
             var connection = Configuration["SqliteConnectionString"];
 
             services.AddMvc();
             services.AddDbContextPool<TimeTrackerDbContext>(options => options.UseSqlite(connection));
             services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<TimeTrackerDbContext>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.Audience = audience;
+                options.ClaimsIssuer = issuer;
+                options.TokenValidationParameters = tokenValidationParameters;
+            });
+            services.AddAuthorization(options => 
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser().Build();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,7 +72,8 @@ namespace timetracker
             {
                 app.UseDeveloperExceptionPage();
             }
-           
+
+            app.UseCors("policy");
             app.UseAuthentication();
             app.UseMvc();
         }

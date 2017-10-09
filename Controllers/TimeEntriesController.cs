@@ -9,17 +9,18 @@ namespace timetracker.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
-    public class TimeEntriesControllers : Controller
+    public class TimeEntriesController : Controller
     {
         private IRepository<TimeEntry> _repository;
 
-        public TimeEntriesControllers(IRepository<TimeEntry> repository)
+        public TimeEntriesController(IRepository<TimeEntry> repository)
         {
             _repository = repository;
         }
 
-        [HttpGet]
-        public IEnumerable<TimeEntry> GetAllForProject(long id)
+        [HttpGet("{id}")]
+        [Route("project")]
+        public IEnumerable<TimeEntry> GetAllEntriesForProject(long id)
         {
             return _repository.GetAll().Where(_ => _.ProjectId == id);
         }
@@ -65,7 +66,7 @@ namespace timetracker.Controllers
             return Ok();
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public IActionResult DeleteTimeEntry(long id)
         {
             var timeEntry = _repository.Get(id);

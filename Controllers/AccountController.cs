@@ -6,9 +6,11 @@ using Microsoft.Extensions.Options;
 using timetracker.Models;
 using System.Linq;
 using System;
-using JWT;
-using JWT.Serializers;
-using JWT.Algorithms;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Security.Principal;
 
 namespace timetracker.Controllers
 {
@@ -30,19 +32,18 @@ namespace timetracker.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register([FromBody] User Credentials)
+        public async Task<IActionResult> Register([FromBody] RegisterUserViewModel model)
         {
             if(ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = Credentials.Username, Email = Credentials.Email };
-                var result = await _userManager.CreateAsync(user, Credentials.Password);
+                var user = new IdentityUser { UserName = model.UserName, Email = model.Email };
+                var result = await _userManager.CreateAsync(user, model.Password);
                 if(result.Succeeded)
                 {
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return new JsonResult( new Dictionary<string, object>
                     {
-                        { "access_token", GetAccessToken(Credentials.Email) },
-                        { "id_token", GetIdToken(user) }
+                        { "access_token", GetToken(user) }
                     });
                 }
                 return Errors(result);
@@ -50,58 +51,43 @@ namespace timetracker.Controllers
             return Error("Unexpected error");
         }
 
-        private string GetIdToken(IdentityUser user)
+        private string GetToken(IdentityUser user)
         {
-            var payload = new Dictionary<string, object>
+            var handler = new JwtSecurityTokenHandler();
+            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_options.SecretKey));
+
+            ClaimsIdentity identity = new ClaimsIdentity(
+                new GenericIdentity(user.UserName, "Token"),
+                new[]{
+                    new Claim(ClaimTypes.NameIdentifier, user.Id)
+                }
+            );
+
+            var securityToken = handler.CreateToken(new SecurityTokenDescriptor
             {
-                { "id", user.Id },
-                { "sub", user.Email },
-                { "email", user.Email },
-                { "emailConfirmed", user.EmailConfirmed }
-            };
-            return GetToken(payload);
-        }
+                Issuer = _options.Issuer,
+                Audience = _options.Audience,
+                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
+                Subject = identity,
+                Expires = DateTime.Now.Add(TimeSpan.FromDays(1)),
+                NotBefore = DateTime.Now
+            });
 
-        private string GetAccessToken(string Email) 
-        {
-            var payload = new Dictionary<string, object>
-            {
-                { "sub", Email },
-                { "email", Email }
-            };
-            return GetToken(payload);
-        }
-
-        private string GetToken(Dictionary<string, object> payload)
-        {
-            var secret = _options.SecretKey;
-
-            payload.Add("iss", _options.Issuer);
-            payload.Add("aud", _options.Audience);
-            payload.Add("nbf", ConvertToUnixTimeStamp(DateTime.Now));
-            payload.Add("iat", ConvertToUnixTimeStamp(DateTime.Now));
-            payload.Add("exp", ConvertToUnixTimeStamp(DateTime.Now.AddDays(7)));
-            IJwtAlgorithm algorithm = new HMACSHA256Algorithm();
-            IJsonSerializer serializer = new JsonNetSerializer();
-            IBase64UrlEncoder urlEncoder = new JwtBase64UrlEncoder();
-            IJwtEncoder encoder = new JwtEncoder(algorithm, serializer, urlEncoder);
-
-            return encoder.Encode(payload, secret);
+            return handler.WriteToken(securityToken);
         }
 
         [HttpPost("sign-in")]
-        public async Task<IActionResult> SignIn([FromBody] User Credentials)
+        public async Task<IActionResult> SignIn([FromBody] LoginViewModel model)
         {
             if(ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(Credentials.Username, Credentials.Password, false, false);
+                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, false, false);
                 if(result.Succeeded)
                 {
-                    var user = await _userManager.FindByEmailAsync(Credentials.Email);
+                    var user = await _userManager.FindByNameAsync(model.UserName);
                     return new JsonResult( new Dictionary<string, object>
                     {
-                        { "access_token", GetAccessToken(Credentials.Email) },
-                        { "id_token", GetIdToken(user) }
+                        { "access_token", GetToken(user) }
                     });
                 }
                 return new JsonResult("Unable to sign in") { StatusCode = 401 };
@@ -120,13 +106,6 @@ namespace timetracker.Controllers
         private JsonResult Error(string message)
         {
             return new JsonResult(message) { StatusCode = 400 };
-        }
-
-        private static double ConvertToUnixTimeStamp(DateTime date)
-        {
-            DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            TimeSpan diff = date.ToUniversalTime() - origin;
-            return Math.Floor(diff.TotalSeconds);
         }
     }
 }

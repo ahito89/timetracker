@@ -8,7 +8,6 @@ namespace timetracker.Models
     {
         public TimeTrackerDbContext(DbContextOptions<TimeTrackerDbContext> options) : base(options)
         {
-            Database.EnsureCreated();
         }
         
         public virtual DbSet<Project> Projects { get; set; }

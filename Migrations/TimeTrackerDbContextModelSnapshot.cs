@@ -193,11 +193,9 @@ namespace timetracker.Migrations
                         .IsRequired()
                         .HasMaxLength(100);
 
-                    b.Property<long>("UserId");
+                    b.Property<Guid>("UserId");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Projects");
                 });
@@ -222,31 +220,6 @@ namespace timetracker.Migrations
                     b.HasIndex("ProjectId");
 
                     b.ToTable("TimeEntries");
-                });
-
-            modelBuilder.Entity("timetracker.Models.User", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime>("AddedDate");
-
-                    b.Property<bool>("Deleted");
-
-                    b.Property<string>("Email")
-                        .IsRequired();
-
-                    b.Property<DateTime>("ModifiedDate");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(100);
-
-                    b.Property<string>("Username");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -290,14 +263,6 @@ namespace timetracker.Migrations
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("timetracker.Models.Project", b =>
-                {
-                    b.HasOne("timetracker.Models.User", "User")
-                        .WithMany("Projects")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });

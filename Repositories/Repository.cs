@@ -17,13 +17,13 @@ namespace timetracker.Repositories
             _entities = context.Set<T>();
         }
 
-
         public void Add(T entity)
         {
             if (entity == null)
             {
                 throw new ArgumentNullException("entity");
             }
+            entity.AddedDate = DateTime.UtcNow;
             _entities.Add(entity);
             Save();
         }
@@ -35,7 +35,7 @@ namespace timetracker.Repositories
 
         public IQueryable<T> GetAll()
         {
-            return _entities.AsQueryable();
+            return _entities.AsQueryable().Where(_ => !_.Deleted);
         }
         
         public void Update(T entity)
@@ -44,6 +44,7 @@ namespace timetracker.Repositories
             {
                 throw new ArgumentNullException("entity");
             }
+            entity.ModifiedDate = DateTime.UtcNow;
             Save();
         }
         private void Save()

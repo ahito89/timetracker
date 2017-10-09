@@ -48,21 +48,21 @@ namespace timetracker.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "Projects",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AddedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Deleted = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: true),
                     ModifiedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Password = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Username = table.Column<string>(type: "TEXT", nullable: true)
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    UserId = table.Column<Guid>(type: "BLOB", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.Id);
+                    table.PrimaryKey("PK_Projects", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -172,30 +172,6 @@ namespace timetracker.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Projects",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AddedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Deleted = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    ModifiedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    UserId = table.Column<long>(type: "INTEGER", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Projects", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Projects_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TimeEntries",
                 columns: table => new
                 {
@@ -256,11 +232,6 @@ namespace timetracker.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Projects_UserId",
-                table: "Projects",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_TimeEntries_ProjectId",
                 table: "TimeEntries",
                 column: "ProjectId");
@@ -294,9 +265,6 @@ namespace timetracker.Migrations
 
             migrationBuilder.DropTable(
                 name: "Projects");
-
-            migrationBuilder.DropTable(
-                name: "User");
         }
     }
 }

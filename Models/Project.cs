@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -12,7 +13,6 @@ namespace timetracker.Models
         public string Description { get; set; }
         public ICollection<TimeEntry> TimeEntries { get; private set; }
 
-        public long UserId { get; set; }
-        public User User { get; set; }
+        public Guid UserId { get; set; }
     }
 }
